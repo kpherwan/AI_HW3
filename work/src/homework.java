@@ -7,6 +7,23 @@ class Argument {
     private boolean isVariable;
     private String term;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Argument argument = (Argument) o;
+        return isVariable == argument.isVariable && term.equals(argument.term);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(isVariable, term);
+    }
+
+    public String getTerm() {
+        return term;
+    }
+
     Argument(String argumentString) {
         if(Character.isUpperCase(argumentString.charAt(0))) {
             isVariable = false;
@@ -136,6 +153,14 @@ class Clause {
         positiveLiterals.add(literal);
     }
 
+    public void addListToPositiveLiterals(List<Literal> literals) {
+        positiveLiterals.addAll(literals);
+    }
+
+    public void addListToNegativeLiterals(List<Literal> literals) {
+        negativeLiterals.addAll(literals);
+    }
+
     public List<Literal> getPositiveLiterals() {
         return positiveLiterals;
     }
@@ -157,11 +182,13 @@ class Substitution {
     Map<Argument, Argument> map;
     Clause clause1;
     Clause clause2;
+    String predicate;
 
-    public Substitution(Map<Argument, Argument> map, Clause clause1, Clause clause2) {
+    public Substitution(Map<Argument, Argument> map, Clause clause1, Clause clause2, String predicate) {
         this.map = map;
         this.clause1 = clause1;
         this.clause2 = clause2;
+        this.predicate = predicate;
     }
 }
 
@@ -238,17 +265,20 @@ public class homework {
             }
 
             for(Literal queryLiteral: queryLiterals) {
+                results.add(ask(predicateMap, queryLiteral));
                 Literal negatedQueryLiteral = queryLiteral.negateLiteral();
-                results.add(ask(predicateMap, negatedQueryLiteral));
+                remove(predicateMap, negatedQueryLiteral);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static boolean ask(Map<String,PredicateInfo> predicateMap, Literal negatedQueryLiteral) {
+    private static boolean ask(Map<String,PredicateInfo> predicateMap, Literal queryLiteral) {
         double startTime = System.currentTimeMillis();
+        Literal negatedQueryLiteral = queryLiteral.negateLiteral();
         String predicate = negatedQueryLiteral.getPredicate();
+        tell(predicateMap, negatedQueryLiteral);
         PredicateInfo predicateInfo = predicateMap.get(predicate);
         Clause queryClause = new Clause(negatedQueryLiteral);
 
@@ -279,9 +309,39 @@ public class homework {
 
         Substitution sub = resolveAgainstClauses(clause, predicateMap);
         if (sub != null) {
-            System.out.println("todo");
+            Clause resolvedClause = new Clause();
+            resolvedClause.addListToPositiveLiterals(getLiteralsPostUnification(sub, sub.clause1.getPositiveLiterals()));
+            resolvedClause.addListToPositiveLiterals(getLiteralsPostUnification(sub, sub.clause2.getPositiveLiterals()));
+
+            resolvedClause.addListToNegativeLiterals(getLiteralsPostUnification(sub, sub.clause1.getNegativeLiterals()));
+            resolvedClause.addListToNegativeLiterals(getLiteralsPostUnification(sub, sub.clause2.getNegativeLiterals()));
+            return resolvedClause;
         }
         return null;
+    }
+
+    private static List<Literal> getLiteralsPostUnification(Substitution sub, List<Literal> literals) {
+        List<Literal> result = new ArrayList<>();
+        for (Literal literal: literals) {
+            if (literal.getPredicate().equals(sub.predicate)) {
+                // check if more than 2 possible
+                continue;
+            }
+            else {
+                List<Argument> newArgs = new ArrayList<>();
+                for(Argument arg: literal.getArguments()) {
+                    if (sub.map.get(arg) != null) {
+                        Argument substitutedArg = new Argument(sub.map.get(arg).getTerm());
+                        newArgs.add(substitutedArg);
+                    }
+                    else {
+                        newArgs.add(arg);
+                    }
+                }
+                result.add(new Literal(literal.getPredicate(), newArgs, literal.isNegativeLiteral()));
+            }
+        }
+        return result;
     }
 
     private static Substitution resolveAgainstClauses(Clause inputClause, Map<String,PredicateInfo> predicateMap) {
@@ -298,7 +358,7 @@ public class homework {
                             .filter(literal -> literal.getPredicate().equals(originalLiteral.getPredicate())).findFirst().get();
                     Map<Argument, Argument> map = unify(negativeLiteral, originalLiteral);
                     if (map != null) {
-                        return new Substitution(map, inputClause, iterClause);
+                        return new Substitution(map, inputClause, iterClause, negativeLiteral.getPredicate());
                     }
                 }
             }
@@ -317,7 +377,7 @@ public class homework {
                             .filter(literal -> literal.getPredicate().equals(originalLiteral.getPredicate())).findFirst().get();
                     Map<Argument, Argument> map = unify(positiveLiteral, originalLiteral);
                     if (map != null) {
-                        return new Substitution(map, inputClause, iterClause);
+                        return new Substitution(map, inputClause, iterClause, positiveLiteral.getPredicate());
                     }
                 }
             }
@@ -326,6 +386,12 @@ public class homework {
     }
 
     private static void tell(Map<String,PredicateInfo> predicateMap, Clause newClause) {
+    }
+
+    private static void remove(Map<String,PredicateInfo> predicateMap,  Literal literal) {
+    }
+
+    private static void tell(Map<String,PredicateInfo> predicateMap,  Literal literal) {
     }
 
     private static Map<Argument, Argument> resolveAgainstLiterals(Clause clause, Map<String,PredicateInfo> predicateMap) {
