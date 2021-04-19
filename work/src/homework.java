@@ -32,13 +32,13 @@ public class homework {
             }
 
             for(Literal queryLiteral: queryLiterals) {
-                boolean askResult = ask(predicateMap, queryLiteral);
+                Map<String, PredicateInfo> predicateMapClone = new HashMap<>();
+                cloneMap(predicateMap, predicateMapClone);
+                boolean askResult = ask(predicateMapClone, queryLiteral);
                 results.add(askResult);
-                Literal negatedQueryLiteral = queryLiteral.negateLiteral();
-                remove(predicateMap, negatedQueryLiteral);
 
-                /*System.out.println("Result " + askResult);
-                System.out.println();*/
+                System.out.println("Result " + askResult);
+                System.out.println();
             }
             addToOutputFile(results);
             double currTime = System.currentTimeMillis();
@@ -48,14 +48,22 @@ public class homework {
         }
     }
 
+    private static void cloneMap(Map<String,PredicateInfo> predicateMap, Map<String,PredicateInfo> predicateMapClone) {
+        for (Map.Entry<String,PredicateInfo> entry : predicateMap.entrySet()) {
+            predicateMapClone.put(entry.getKey(),
+                    new PredicateInfo(entry.getValue()));
+        }
+    }
+
     private static boolean ask(Map<String,PredicateInfo> predicateMap, Literal queryLiteral) {
         double startTime = System.currentTimeMillis();
         int noOfAttempts = 0;
         Literal negatedQueryLiteral = queryLiteral.negateLiteral();
         String predicate = negatedQueryLiteral.getPredicate();
-        tell(predicateMap, negatedQueryLiteral);
+
         PredicateInfo predicateInfo = predicateMap.get(predicate);
         Clause queryClause = new Clause(negatedQueryLiteral);
+        addPredicatesOfClauseToMap(queryClause, predicateMap);
 
         if (predicateInfo != null) {
             Clause newClause = resolve(queryClause, predicateMap);
@@ -67,7 +75,7 @@ public class homework {
                     return true;
                 }
 
-                //newClause.printClause();
+                newClause.printClause();
                 double currTime = System.currentTimeMillis();
                 noOfAttempts++;
                 if ((currTime - startTime) > TOTAL_TIME_FOR_QUERY && noOfAttempts > TOTAL_ATTEMPTS) {
@@ -147,7 +155,7 @@ public class homework {
                     Literal negativeLiteral = iterClause.getNegativeLiterals().stream()
                             .filter(literal -> literal.getPredicate().equals(originalLiteral.getPredicate())).findFirst().get();
                     if (canLiteralsResolve(negativeLiteral, originalLiteral)) {
-                        Map<Argument, Argument> map = unify(negativeLiteral, originalLiteral);
+                        Map<Argument, Argument> map = unify(originalLiteral, negativeLiteral);
                         if (map != null) {
                             return new Substitution(map, inputClause, iterClause, negativeLiteral, originalLiteral);
                         }
@@ -168,7 +176,7 @@ public class homework {
                     Literal positiveLiteral = iterClause.getPositiveLiterals().stream()
                             .filter(literal -> literal.getPredicate().equals(originalLiteral.getPredicate())).findFirst().get();
                     if (canLiteralsResolve(positiveLiteral, originalLiteral)) {
-                        Map<Argument, Argument> map = unify(positiveLiteral, originalLiteral);
+                        Map<Argument, Argument> map = unify(originalLiteral, positiveLiteral);
                         if (map != null) {
                             return new Substitution(map, inputClause, iterClause, positiveLiteral, originalLiteral);
                         }
@@ -179,12 +187,6 @@ public class homework {
         return null;
     }
 
-
-    private static void remove(Map<String,PredicateInfo> predicateMap,  Literal literal) {
-    }
-
-    private static void tell(Map<String,PredicateInfo> predicateMap,  Literal literal) {
-    }
 
     private static Substitution resolveAgainstLiterals(Clause clause, Map<String,PredicateInfo> predicateMap) {
 
@@ -347,6 +349,7 @@ public class homework {
     private static void addPredicatesOfClauseToMap(Clause clause, Map<String,PredicateInfo> predicateMap) {
         List<Literal> positiveLiterals = clause.getPositiveLiterals();
         List<Literal> negativeLiterals = clause.getNegativeLiterals();
+        Set<String> distinctPredicates = new HashSet<>();
 
         for(Literal positiveLiteral: positiveLiterals) {
             PredicateInfo predicateInfo = predicateMap.get(positiveLiteral.getPredicate());
@@ -354,7 +357,10 @@ public class homework {
                 predicateInfo = new PredicateInfo();
                 predicateMap.put(positiveLiteral.getPredicate(), predicateInfo);
             }
-            predicateInfo.addClauseContainingPositivePredicate(clause);
+            if (!distinctPredicates.contains(positiveLiteral.getPredicate())) {
+                predicateInfo.addClauseContainingPositivePredicate(clause);
+                distinctPredicates.add(positiveLiteral.getPredicate());
+            }
         }
 
         for(Literal negativeLiteral: negativeLiterals) {
@@ -363,7 +369,10 @@ public class homework {
                 predicateInfo = new PredicateInfo();
                 predicateMap.put(negativeLiteral.getPredicate(), predicateInfo);
             }
-            predicateInfo.addClauseContainingNegativePredicate(clause);
+            if (!distinctPredicates.contains(negativeLiteral.getPredicate())) {
+                predicateInfo.addClauseContainingNegativePredicate(clause);
+                distinctPredicates.add(negativeLiteral.getPredicate());
+            }
         }
     }
 
@@ -460,6 +469,11 @@ class Argument {
 
         if(!argument.isVariable) {
             substitutions.put(this, argument);
+            return substitutions;
+        }
+
+        if(argument.isVariable() && this.isVariable()) {
+            substitutions.put(argument, this);
             return substitutions;
         }
         return null;
@@ -666,6 +680,13 @@ class PredicateInfo {
         negativeLiterals = new ArrayList<>();
         clausesContainingPositivePredicate = new ArrayList<>();
         clausesContainingNegativePredicate = new ArrayList<>();
+    }
+
+    PredicateInfo(PredicateInfo predicateInfoInput) {
+        positiveLiterals = new ArrayList<>(predicateInfoInput.positiveLiterals);
+        negativeLiterals = new ArrayList<>(predicateInfoInput.negativeLiterals);
+        clausesContainingPositivePredicate = new ArrayList<>(predicateInfoInput.clausesContainingPositivePredicate);
+        clausesContainingNegativePredicate = new ArrayList<>(predicateInfoInput.clausesContainingNegativePredicate);
     }
 
     public void addToNegativeLiterals(Literal literal) {

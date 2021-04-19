@@ -1,0 +1,4 @@
+1
+Criminal(West)
+1
+Weapon(x) & ~Weapon(x) => Criminal(x)
