@@ -5,7 +5,7 @@ import java.util.*;
 
 
 public class homework {
-    private static final double TOTAL_TIME_FOR_QUERY = 30000;
+    private static final double TOTAL_TIME_FOR_QUERY = 10000;
     private static final double TOTAL_ATTEMPTS = 100;
     private static final String NOT_INFERRED = "FALSE";
     private static final String INFERRED = "TRUE";
@@ -18,7 +18,7 @@ public class homework {
 
         try {
             //scanner = new Scanner(new File("input.txt"));
-            scanner = new Scanner(new File("input4.txt"));
+            scanner = new Scanner(new File("input7.txt"));
             int noOfQueries = Integer.parseInt(scanner.nextLine());
             List<Boolean> results = new ArrayList<>(noOfQueries);
 
@@ -64,13 +64,17 @@ public class homework {
         PredicateInfo predicateInfo = predicateMap.get(predicate);
         Clause queryClause = new Clause(negatedQueryLiteral);
         addPredicatesOfClauseToMap(queryClause, predicateMap);
+        Stack<Clause> stack = new Stack<>();
+        Clause newClause;
 
         if (predicateInfo != null) {
-            Clause newClause = resolve(queryClause, predicateMap);
+             stack.addAll(resolve(queryClause, predicateMap));
             do {
-                if(newClause == null/* || !newClause.isValid()*/) {
+                if(stack == null || stack.isEmpty()/* || !newClause.isValid()*/) {
                     return false;
                 }
+
+                newClause = stack.pop();
                 if (newClause.isEmpty()) {
                     return true;
                 }
@@ -78,11 +82,11 @@ public class homework {
                 newClause.printClause();
                 double currTime = System.currentTimeMillis();
                 noOfAttempts++;
-                if ((currTime - startTime) > TOTAL_TIME_FOR_QUERY && noOfAttempts > TOTAL_ATTEMPTS) {
+                if ((currTime - startTime) > TOTAL_TIME_FOR_QUERY || noOfAttempts > TOTAL_ATTEMPTS) {
                     return false;
                 }
                 addPredicatesOfClauseToMap(newClause, predicateMap);
-                newClause = resolve(newClause, predicateMap);
+                stack.addAll(resolve(newClause, predicateMap));
 
             }while (true);
         }
@@ -91,27 +95,30 @@ public class homework {
         }
     }
 
-    private static Clause resolve(Clause clause, Map<String,PredicateInfo> predicateMap) {
+    private static List<Clause> resolve(Clause clause, Map<String,PredicateInfo> predicateMap) {
         Substitution subLiteral = resolveAgainstLiterals(clause, predicateMap);
+        List<Clause> resultClauses = new ArrayList<>();
         if (subLiteral != null) {
             Clause resolvedClause = new Clause();
             resolvedClause.addListToPositiveLiterals(getLiteralsPostUnification(subLiteral, clause.getPositiveLiterals()));
             resolvedClause.addListToNegativeLiterals(getLiteralsPostUnification(subLiteral, clause.getNegativeLiterals()));
-
-            return resolvedClause;
+            resultClauses.add(resolvedClause);
+            return resultClauses;
         }
 
-        Substitution sub = resolveAgainstClauses(clause, predicateMap);
-        if (sub != null) {
-            Clause resolvedClause = new Clause();
-            resolvedClause.addListToPositiveLiterals(getLiteralsPostUnification(sub, sub.clause1.getPositiveLiterals()));
-            resolvedClause.addListToPositiveLiterals(getLiteralsPostUnification(sub, sub.clause2.getPositiveLiterals()));
+        List<Substitution> subList = resolveAgainstClauses(clause, predicateMap);
+        if (!subList.isEmpty()) {
+            for(Substitution sub: subList) {
+                Clause resolvedClause = new Clause();
+                resolvedClause.addListToPositiveLiterals(getLiteralsPostUnification(sub, sub.clause1.getPositiveLiterals()));
+                resolvedClause.addListToPositiveLiterals(getLiteralsPostUnification(sub, sub.clause2.getPositiveLiterals()));
 
-            resolvedClause.addListToNegativeLiterals(getLiteralsPostUnification(sub, sub.clause1.getNegativeLiterals()));
-            resolvedClause.addListToNegativeLiterals(getLiteralsPostUnification(sub, sub.clause2.getNegativeLiterals()));
-            return resolvedClause;
+                resolvedClause.addListToNegativeLiterals(getLiteralsPostUnification(sub, sub.clause1.getNegativeLiterals()));
+                resolvedClause.addListToNegativeLiterals(getLiteralsPostUnification(sub, sub.clause2.getNegativeLiterals()));
+                resultClauses.add(resolvedClause);
+            }
         }
-        return null;
+        return resultClauses;
     }
 
     private static List<Literal> getLiteralsPostUnification(Substitution sub, List<Literal> literals) {
@@ -142,8 +149,9 @@ public class homework {
         return result;
     }
 
-    private static Substitution resolveAgainstClauses(Clause inputClause, Map<String,PredicateInfo> predicateMap) {
+    private static List<Substitution> resolveAgainstClauses(Clause inputClause, Map<String,PredicateInfo> predicateMap) {
         List<Literal> positiveLiterals = inputClause.getPositiveLiterals();
+        List<Substitution> substitutions = new ArrayList<>();
 
         for(Literal originalLiteral: positiveLiterals) {
             String predicate = originalLiteral.getPredicate();
@@ -157,7 +165,7 @@ public class homework {
                     if (canLiteralsResolve(negativeLiteral, originalLiteral)) {
                         Map<Argument, Argument> map = unify(originalLiteral, negativeLiteral);
                         if (map != null) {
-                            return new Substitution(map, inputClause, iterClause, negativeLiteral, originalLiteral);
+                            substitutions.add(new Substitution(map, inputClause, iterClause, negativeLiteral, originalLiteral));
                         }
                     }
                 }
@@ -178,13 +186,13 @@ public class homework {
                     if (canLiteralsResolve(positiveLiteral, originalLiteral)) {
                         Map<Argument, Argument> map = unify(originalLiteral, positiveLiteral);
                         if (map != null) {
-                            return new Substitution(map, inputClause, iterClause, positiveLiteral, originalLiteral);
+                            substitutions.add(new Substitution(map, inputClause, iterClause, positiveLiteral, originalLiteral));
                         }
                     }
                 }
             }
         }
-        return null;
+        return substitutions;
     }
 
 
@@ -363,6 +371,7 @@ public class homework {
             }
         }
 
+        distinctPredicates = new HashSet<>();
         for(Literal negativeLiteral: negativeLiterals) {
             PredicateInfo predicateInfo = predicateMap.get(negativeLiteral.getPredicate());
             if (predicateInfo == null) {
