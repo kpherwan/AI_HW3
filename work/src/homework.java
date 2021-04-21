@@ -3,7 +3,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-
 public class homework {
     private static final double TOTAL_TIME_FOR_QUERY = 10000;
     private static final double TOTAL_ATTEMPTS = 100;
@@ -75,6 +74,7 @@ public class homework {
                 }
 
                 newClause = stack.pop();
+
                 if (newClause.isEmpty()) {
                     return true;
                 }
@@ -82,11 +82,14 @@ public class homework {
                 newClause.printClause();
                 double currTime = System.currentTimeMillis();
                 noOfAttempts++;
-                if ((currTime - startTime) > TOTAL_TIME_FOR_QUERY || noOfAttempts > TOTAL_ATTEMPTS) {
+                if ((currTime - startTime) > TOTAL_TIME_FOR_QUERY && noOfAttempts > TOTAL_ATTEMPTS) {
+                    System.out.println("TIMEOUT");
                     return false;
                 }
-                addPredicatesOfClauseToMap(newClause, predicateMap);
-                stack.addAll(resolve(newClause, predicateMap));
+                int exitCode = addPredicatesOfClauseToMap(newClause, predicateMap);
+                if (exitCode == 0) {
+                    stack.addAll(resolve(newClause, predicateMap));
+                }
 
             }while (true);
         }
@@ -96,13 +99,15 @@ public class homework {
     }
 
     private static List<Clause> resolve(Clause clause, Map<String,PredicateInfo> predicateMap) {
-        Substitution subLiteral = resolveAgainstLiterals(clause, predicateMap);
+        List<Substitution> subList1 = resolveAgainstLiterals(clause, predicateMap);
         List<Clause> resultClauses = new ArrayList<>();
-        if (subLiteral != null) {
-            Clause resolvedClause = new Clause();
-            resolvedClause.addListToPositiveLiterals(getLiteralsPostUnification(subLiteral, clause.getPositiveLiterals()));
-            resolvedClause.addListToNegativeLiterals(getLiteralsPostUnification(subLiteral, clause.getNegativeLiterals()));
-            resultClauses.add(resolvedClause);
+        if (!subList1.isEmpty()) {
+            for(Substitution substitution: subList1) {
+                Clause resolvedClause = new Clause();
+                resolvedClause.addListToPositiveLiterals(getLiteralsPostUnification(substitution, clause.getPositiveLiterals()));
+                resolvedClause.addListToNegativeLiterals(getLiteralsPostUnification(substitution, clause.getNegativeLiterals()));
+                resultClauses.add(resolvedClause);
+            }
             return resultClauses;
         }
 
@@ -121,8 +126,8 @@ public class homework {
         return resultClauses;
     }
 
-    private static List<Literal> getLiteralsPostUnification(Substitution sub, List<Literal> literals) {
-        List<Literal> result = new ArrayList<>();
+    private static Set<Literal> getLiteralsPostUnification(Substitution sub, Set<Literal> literals) {
+        Set<Literal> result = new HashSet<>();
         int resolvedCount = 0;
         for (Literal literal: literals) {
             if ((literal.equals(sub.literal1) || literal.equals(sub.literal2)) && resolvedCount < 2) {
@@ -150,7 +155,7 @@ public class homework {
     }
 
     private static List<Substitution> resolveAgainstClauses(Clause inputClause, Map<String,PredicateInfo> predicateMap) {
-        List<Literal> positiveLiterals = inputClause.getPositiveLiterals();
+        Set<Literal> positiveLiterals = inputClause.getPositiveLiterals();
         List<Substitution> substitutions = new ArrayList<>();
 
         for(Literal originalLiteral: positiveLiterals) {
@@ -172,7 +177,7 @@ public class homework {
             }
         }
 
-        List<Literal> negativeLiterals = inputClause.getNegativeLiterals();
+        Set<Literal> negativeLiterals = inputClause.getNegativeLiterals();
 
         for(Literal originalLiteral: negativeLiterals) {
             String predicate = originalLiteral.getPredicate();
@@ -196,9 +201,10 @@ public class homework {
     }
 
 
-    private static Substitution resolveAgainstLiterals(Clause clause, Map<String,PredicateInfo> predicateMap) {
+    private static List<Substitution> resolveAgainstLiterals(Clause clause, Map<String,PredicateInfo> predicateMap) {
 
-        List<Literal> positiveLiterals = clause.getPositiveLiterals();
+        Set<Literal> positiveLiterals = clause.getPositiveLiterals();
+        List<Substitution> substitutionList = new ArrayList<>();
 
         for(Literal originalLiteral: positiveLiterals) {
             String predicate = originalLiteral.getPredicate();
@@ -209,16 +215,16 @@ public class homework {
                 for(Literal negativeLiteral: negativeLiteralList) {
                     Map<Argument, Argument> substitutionMap = unify(negativeLiteral, originalLiteral);
                     if (substitutionMap != null) {
-                        return new Substitution(substitutionMap, null, null, negativeLiteral, originalLiteral);
+                        substitutionList.add(new Substitution(substitutionMap, null, null, negativeLiteral, originalLiteral));
                     }
-                    if (canLiteralsNullify(negativeLiteral, originalLiteral)) {
-                        return new Substitution(null, null, null, negativeLiteral, originalLiteral);
+                    else if (canLiteralsNullify(negativeLiteral, originalLiteral)) {
+                        substitutionList.add(new Substitution(null, null, null, negativeLiteral, originalLiteral));
                     }
                 }
             }
         }
 
-        List<Literal> negativeLiterals;
+        Set<Literal> negativeLiterals;
         negativeLiterals = clause.getNegativeLiterals();
 
         for(Literal originalLiteral: negativeLiterals) {
@@ -228,19 +234,18 @@ public class homework {
             if (predicateInfo != null) {
                 List<Literal> positiveLiteralsList = predicateInfo.getPositiveLiterals();
                 for(Literal positiveLiteral: positiveLiteralsList) {
-                    Map<Argument, Argument> substitutions = unify(positiveLiteral, originalLiteral);
                     Map<Argument, Argument> substitutionMap = unify(positiveLiteral, originalLiteral);
                     if (substitutionMap != null) {
-                        return new Substitution(substitutionMap, null, null, positiveLiteral, originalLiteral);
+                        substitutionList.add(new Substitution(substitutionMap, null, null, positiveLiteral, originalLiteral));
                     }
                     if (canLiteralsNullify(positiveLiteral, originalLiteral)) {
-                        return new Substitution(null, null, null, positiveLiteral, originalLiteral);
+                        substitutionList.add(new Substitution(null, null, null, positiveLiteral, originalLiteral));
                     }
                 }
             }
         }
 
-        return null;
+        return substitutionList;
     }
 
     /*Exactly alike literals for A OR ~A*/
@@ -354,9 +359,9 @@ public class homework {
         }
     }
 
-    private static void addPredicatesOfClauseToMap(Clause clause, Map<String,PredicateInfo> predicateMap) {
-        List<Literal> positiveLiterals = clause.getPositiveLiterals();
-        List<Literal> negativeLiterals = clause.getNegativeLiterals();
+    private static int addPredicatesOfClauseToMap(Clause clause, Map<String,PredicateInfo> predicateMap) {
+        Set<Literal> positiveLiterals = clause.getPositiveLiterals();
+        Set<Literal> negativeLiterals = clause.getNegativeLiterals();
         Set<String> distinctPredicates = new HashSet<>();
 
         for(Literal positiveLiteral: positiveLiterals) {
@@ -366,6 +371,9 @@ public class homework {
                 predicateMap.put(positiveLiteral.getPredicate(), predicateInfo);
             }
             if (!distinctPredicates.contains(positiveLiteral.getPredicate())) {
+                if (predicateInfo.getClausesContainingPositivePredicate().contains(clause)) {
+                    return 1;
+                }
                 predicateInfo.addClauseContainingPositivePredicate(clause);
                 distinctPredicates.add(positiveLiteral.getPredicate());
             }
@@ -379,10 +387,14 @@ public class homework {
                 predicateMap.put(negativeLiteral.getPredicate(), predicateInfo);
             }
             if (!distinctPredicates.contains(negativeLiteral.getPredicate())) {
+                if (predicateInfo.getClausesContainingNegativePredicate().contains(clause)) {
+                    return 1;
+                }
                 predicateInfo.addClauseContainingNegativePredicate(clause);
                 distinctPredicates.add(negativeLiteral.getPredicate());
             }
         }
+        return 0;
     }
 
 
@@ -500,7 +512,17 @@ class Literal {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Literal literal = (Literal) o;
-        return isNegativeLiteral == literal.isNegativeLiteral && Objects.equals(predicate, literal.predicate) && Objects.equals(arguments, literal.arguments);
+
+        if (this.arguments.size() != literal.arguments.size()) {
+            return false;
+        }
+
+        for (int i=0; i<this.arguments.size(); i++) {
+            if(!this.arguments.get(i).equals(literal.arguments.get(i))) {
+                return false;
+            }
+        }
+        return isNegativeLiteral == literal.isNegativeLiteral && Objects.equals(predicate, literal.predicate);
     }
 
     @Override
@@ -569,17 +591,46 @@ class Literal {
 
 /*A Clause: A disjunction of literals*/
 class Clause {
-    private List<Literal> positiveLiterals;
-    private List<Literal> negativeLiterals;
+    private Set<Literal> positiveLiterals;
+    private Set<Literal> negativeLiterals;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Clause clause = (Clause) o;
+        if ((this.getNegativeLiterals().size() != clause.getNegativeLiterals().size()) ||
+                (this.getPositiveLiterals().size() != clause.getPositiveLiterals().size())) {
+            return false;
+        }
+
+        for(Literal literal: this.getNegativeLiterals()) {
+            if (!clause.getNegativeLiterals().contains(literal)) {
+                return false;
+            }
+        }
+
+        for(Literal literal: this.getPositiveLiterals()) {
+            if (!clause.getPositiveLiterals().contains(literal)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(positiveLiterals, negativeLiterals);
+    }
 
     Clause() {
-        positiveLiterals = new ArrayList<>();
-        negativeLiterals = new ArrayList<>();
+        positiveLiterals = new HashSet<>();
+        negativeLiterals = new HashSet<>();
     }
 
     public Clause(Literal literal) {
-        positiveLiterals = new ArrayList<>();
-        negativeLiterals = new ArrayList<>();
+        positiveLiterals = new HashSet<>();
+        negativeLiterals = new HashSet<>();
 
         if(literal.isNegativeLiteral()) {
             addToNegativeLiterals(literal);
@@ -595,22 +646,23 @@ class Clause {
     }
 
     public void addToPositiveLiterals(Literal literal) {
+        literal.setNegativeLiteral(false);
         positiveLiterals.add(literal);
     }
 
-    public void addListToPositiveLiterals(List<Literal> literals) {
+    public void addListToPositiveLiterals(Set<Literal> literals) {
         positiveLiterals.addAll(literals);
     }
 
-    public void addListToNegativeLiterals(List<Literal> literals) {
+    public void addListToNegativeLiterals(Set<Literal> literals) {
         negativeLiterals.addAll(literals);
     }
 
-    public List<Literal> getPositiveLiterals() {
+    public Set<Literal> getPositiveLiterals() {
         return positiveLiterals;
     }
 
-    public List<Literal> getNegativeLiterals() {
+    public Set<Literal> getNegativeLiterals() {
         return negativeLiterals;
     }
 
@@ -712,6 +764,18 @@ class PredicateInfo {
 
     public void addClauseContainingNegativePredicate(Clause clause) {
         clausesContainingNegativePredicate.add(clause);
+    }
+
+    public boolean contains(Clause inputClause) {
+        for(Clause currentClause: clausesContainingPositivePredicate) {
+            if(currentClause.equals(inputClause))
+                return true;
+        }
+        for(Clause currentClause: clausesContainingNegativePredicate) {
+            if(currentClause.equals(inputClause))
+                return true;
+        }
+        return false;
     }
 }
 
