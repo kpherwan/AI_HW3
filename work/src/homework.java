@@ -4,8 +4,9 @@ import java.io.IOException;
 import java.util.*;
 
 public class homework {
-    private static final double TOTAL_TIME_FOR_QUERY = 3000;
-    private static final double TOTAL_ATTEMPTS = 100;
+    // minimim one second
+    private static final double TOTAL_TIME_FOR_QUERY = 1000;
+    private static final double TOTAL_ATTEMPTS = 150;
     private static final String NOT_INFERRED = "FALSE";
     private static final String INFERRED = "TRUE";
 
@@ -17,7 +18,7 @@ public class homework {
 
         try {
             scanner = new Scanner(new File("../../input.txt"));
-            //scanner = new Scanner(new File("input_45.txt"));
+            //scanner = new Scanner(new File("input.txt"));
             int noOfQueries = Integer.parseInt(scanner.nextLine());
             List<Boolean> results = new ArrayList<>(noOfQueries);
 
@@ -35,8 +36,8 @@ public class homework {
                 cloneMap(predicateMap, predicateMapClone);
                 boolean askResult = ask(predicateMapClone, queryLiteral);
                 results.add(askResult);
-                /*System.out.println("Result " + askResult);
-                System.out.println();*/
+                //System.out.println("Result " + askResult);
+                //System.out.println();
             }
             addToOutputFile(results);
             double currTime = System.currentTimeMillis();
@@ -61,18 +62,18 @@ public class homework {
 
         PredicateInfo predicateInfo = predicateMap.get(predicate);
         Clause queryClause = new Clause(negatedQueryLiteral);
-        addPredicatesOfClauseToMap(queryClause, predicateMap);
-        Stack<Clause> stack = new Stack<>();
+        addClauseToMap(queryClause, predicateMap);
+        Queue<Clause> queue = new LinkedList<>();
         Clause newClause;
 
         if (predicateInfo != null) {
-             stack.addAll(resolve(queryClause, predicateMap));
+             queue.addAll(resolve(queryClause, predicateMap));
             do {
-                if(stack == null || stack.isEmpty()/* || !newClause.isValid()*/) {
+                if(queue == null || queue.isEmpty()/* || !newClause.isValid()*/) {
                     return false;
                 }
 
-                newClause = stack.pop();
+                newClause = queue.poll();
 
                 if (newClause.isEmpty()) {
                     return true;
@@ -85,9 +86,9 @@ public class homework {
                     System.out.println("TIMEOUT");
                     return false;
                 }
-                int exitCode = addPredicatesOfClauseToMap(newClause, predicateMap);
+                int exitCode = addClauseToMap(newClause, predicateMap);
                 if (exitCode == 0) {
-                    stack.addAll(resolve(newClause, predicateMap));
+                    queue.addAll(resolve(newClause, predicateMap));
                 }
 
             }while (true);
@@ -336,7 +337,7 @@ public class homework {
                         clause.addToNegativeLiterals(premiseLiteral);
                     }
                 }
-                addPredicatesOfClauseToMap(clause, predicateMap);
+                addClauseToMap(clause, predicateMap);
             }
         }
         else {
@@ -358,7 +359,7 @@ public class homework {
         }
     }
 
-    private static int addPredicatesOfClauseToMap(Clause clause, Map<String,PredicateInfo> predicateMap) {
+    private static int addClauseToMap(Clause clause, Map<String,PredicateInfo> predicateMap) {
         Set<Literal> positiveLiterals = clause.getPositiveLiterals();
         Set<Literal> negativeLiterals = clause.getNegativeLiterals();
         Set<String> distinctPredicates = new HashSet<>();
@@ -371,6 +372,9 @@ public class homework {
             }
             if (!distinctPredicates.contains(positiveLiteral.getPredicate())) {
                 if (predicateInfo.getClausesContainingPositivePredicate().contains(clause)) {
+                    return 1;
+                }
+                if (predicateInfo.getPositiveLiterals().contains(positiveLiteral)) {
                     return 1;
                 }
                 predicateInfo.addClauseContainingPositivePredicate(clause);
@@ -387,6 +391,9 @@ public class homework {
             }
             if (!distinctPredicates.contains(negativeLiteral.getPredicate())) {
                 if (predicateInfo.getClausesContainingNegativePredicate().contains(clause)) {
+                    return 1;
+                }
+                if (predicateInfo.getNegativeLiterals().contains(negativeLiteral)) {
                     return 1;
                 }
                 predicateInfo.addClauseContainingNegativePredicate(clause);
