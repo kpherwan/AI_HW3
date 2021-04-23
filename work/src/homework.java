@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class homework {
-    private static final double TOTAL_TIME_FOR_QUERY = 10000;
+    private static final double TOTAL_TIME_FOR_QUERY = 3000;
     private static final double TOTAL_ATTEMPTS = 100;
     private static final String NOT_INFERRED = "FALSE";
     private static final String INFERRED = "TRUE";
@@ -16,8 +16,8 @@ public class homework {
         Map<String, PredicateInfo> predicateMap = new HashMap<>();
 
         try {
-            //scanner = new Scanner(new File("input.txt"));
-            scanner = new Scanner(new File("input7.txt"));
+            scanner = new Scanner(new File("../../input.txt"));
+            //scanner = new Scanner(new File("input_45.txt"));
             int noOfQueries = Integer.parseInt(scanner.nextLine());
             List<Boolean> results = new ArrayList<>(noOfQueries);
 
@@ -35,9 +35,8 @@ public class homework {
                 cloneMap(predicateMap, predicateMapClone);
                 boolean askResult = ask(predicateMapClone, queryLiteral);
                 results.add(askResult);
-
-                System.out.println("Result " + askResult);
-                System.out.println();
+                /*System.out.println("Result " + askResult);
+                System.out.println();*/
             }
             addToOutputFile(results);
             double currTime = System.currentTimeMillis();
@@ -79,7 +78,7 @@ public class homework {
                     return true;
                 }
 
-                newClause.printClause();
+                //newClause.printClause();
                 double currTime = System.currentTimeMillis();
                 noOfAttempts++;
                 if ((currTime - startTime) > TOTAL_TIME_FOR_QUERY && noOfAttempts > TOTAL_ATTEMPTS) {
@@ -402,13 +401,17 @@ public class homework {
 
         try {
             FileWriter fw = new FileWriter("output.txt");
+            boolean result;
+            boolean isLast = false;
 
-            for(boolean result: results) {
+            for(int i=0; i<results.size(); i++) {
+                result = results.get(i);
+                isLast = ( i == (results.size() - 1));
                 if(result) {
-                    fw.write(INFERRED + "\n");
+                    fw.write(INFERRED + (isLast ? "" : "\n"));
                 }
                 else {
-                    fw.write(NOT_INFERRED + "\n");
+                    fw.write(NOT_INFERRED + (isLast ? "" : "\n"));
                 }
             }
 

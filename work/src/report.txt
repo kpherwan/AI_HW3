@@ -1,0 +1,233 @@
+Time taken: 118.0
+../../output_01.txt exists.
+1,3d0
+< TRUE
+< FALSE
+< TRUE
+Time taken: 119.0
+../../output_02.txt exists.
+2,4c2
+< TRUE
+< FALSE
+< FALSE
+\ No newline at end of file
+---
+> TRUE
+\ No newline at end of file
+Time taken: 133.0
+../../output_03.txt exists.
+1,2d0
+< FALSE
+< FALSE
+5c3
+< TRUE
+\ No newline at end of file
+---
+> FALSE
+\ No newline at end of file
+Time taken: 74.0
+../../output_04.txt exists.
+1,2d0
+< FALSE
+< FALSE
+4c2,3
+< FALSE
+\ No newline at end of file
+---
+> FALSE
+> TRUE
+\ No newline at end of file
+Time taken: 918.0
+../../output_05.txt exists.
+1a2
+> FALSE
+Time taken: 59.0
+../../output_06.txt exists.
+0a1,3
+> FALSE
+> TRUE
+> FALSE
+\ No newline at end of file
+Time taken: 2326.0
+../../output_07.txt exists.
+1,3c1,2
+< TRUE
+< TRUE
+< FALSE
+\ No newline at end of file
+---
+> FALSE
+> TRUE
+\ No newline at end of file
+TIMEOUT
+TIMEOUT
+TIMEOUT
+Time taken: 9067.0
+../../output_08.txt exists.
+2d1
+< TRUE
+Time taken: 166.0
+../../output_09.txt exists.
+2c2
+< TRUE
+\ No newline at end of file
+---
+> FALSE
+\ No newline at end of file
+Time taken: 391.0
+../../output_10.txt exists.
+TIMEOUT
+Time taken: 3066.0
+../../output_11.txt exists.
+2c2
+< TRUE
+\ No newline at end of file
+---
+> FALSE
+\ No newline at end of file
+TIMEOUT
+TIMEOUT
+TIMEOUT
+Time taken: 9121.0
+../../output_12.txt exists.
+2,3c2
+< FALSE
+< FALSE
+\ No newline at end of file
+---
+> TRUE
+\ No newline at end of file
+TIMEOUT
+TIMEOUT
+TIMEOUT
+TIMEOUT
+Time taken: 12283.0
+../../output_13.txt exists.
+1,2c1
+< FALSE
+< FALSE
+---
+> TRUE
+Time taken: 60.0
+../../output_14.txt exists.
+1c1,4
+< TRUE
+\ No newline at end of file
+---
+> FALSE
+> TRUE
+> FALSE
+> FALSE
+\ No newline at end of file
+Time taken: 57.0
+../../output_15.txt exists.
+1a2
+> FALSE
+3c4,5
+< FALSE
+\ No newline at end of file
+---
+> FALSE
+> TRUE
+\ No newline at end of file
+Time taken: 64.0
+../../output_16.txt exists.
+0a1,2
+> FALSE
+> FALSE
+2c4
+< TRUE
+\ No newline at end of file
+---
+> FALSE
+\ No newline at end of file
+Time taken: 58.0
+../../output_17.txt exists.
+Time taken: 114.0
+../../output_18.txt exists.
+0a1
+> FALSE
+Time taken: 3058.0
+../../output_19.txt exists.
+TIMEOUT
+TIMEOUT
+TIMEOUT
+Time taken: 9080.0
+../../output_20.txt exists.
+3c3
+< FALSE
+---
+> TRUE
+Time taken: 60.0
+../../output_21.txt exists.
+1d0
+< FALSE
+3c2
+< FALSE
+\ No newline at end of file
+---
+> TRUE
+\ No newline at end of file
+Time taken: 66.0
+../../output_22.txt exists.
+1,2c1
+< TRUE
+< TRUE
+---
+> FALSE
+TIMEOUT
+Time taken: 3074.0
+../../output_23.txt exists.
+TIMEOUT
+TIMEOUT
+TIMEOUT
+Time taken: 9104.0
+../../output_24.txt exists.
+3c3
+< FALSE
+\ No newline at end of file
+---
+> TRUE
+\ No newline at end of file
+TIMEOUT
+TIMEOUT
+TIMEOUT
+TIMEOUT
+Time taken: 12132.0
+../../output_25.txt exists.
+3c3
+< FALSE
+---
+> TRUE
+Time taken: 59.0
+../../output_26.txt exists.
+1,4c1
+< FALSE
+< FALSE
+< FALSE
+< FALSE
+\ No newline at end of file
+---
+> TRUE
+\ No newline at end of file
+Time taken: 66.0
+../../output_27.txt exists.
+2c2
+< FALSE
+---
+> TRUE
+Time taken: 57.0
+../../output_28.txt exists.
+1,2c1,2
+< FALSE
+< FALSE
+\ No newline at end of file
+---
+> TRUE
+> TRUE
+\ No newline at end of file
+Time taken: 66.0
+../../output_29.txt exists.
+2,3d1
+< TRUE
+< TRUE
