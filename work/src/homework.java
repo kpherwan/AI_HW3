@@ -64,9 +64,10 @@ public class homework {
         Clause queryClause = new Clause(negatedQueryLiteral);
         addClauseToMap(queryClause, predicateMap);
         Queue<Clause> queue = new LinkedList<>();
-        Clause newClause;
+        Clause newClause = queryClause;
 
         if (predicateInfo != null) {
+            //newClause.printClause();
              queue.addAll(resolve(queryClause, predicateMap));
             do {
                 if(queue == null || queue.isEmpty()/* || !newClause.isValid()*/) {
@@ -79,7 +80,7 @@ public class homework {
                     return true;
                 }
 
-                //newClause.printClause();
+
                 double currTime = System.currentTimeMillis();
                 noOfAttempts++;
                 if ((currTime - startTime) > TOTAL_TIME_FOR_QUERY && noOfAttempts > TOTAL_ATTEMPTS) {
@@ -88,6 +89,7 @@ public class homework {
                 }
                 int exitCode = addClauseToMap(newClause, predicateMap);
                 if (exitCode == 0) {
+                    //newClause.printClause();
                     queue.addAll(resolve(newClause, predicateMap));
                 }
 
@@ -493,8 +495,8 @@ class Argument {
 
         // has this variable already found a substitution before
         // if yes unify previous substitution with the new possible one
-        if (substitutions.get(this.term) != null) {
-            Argument previousSubstitution = substitutions.get(this.term);
+        if (substitutions.get(this) != null) {
+            Argument previousSubstitution = substitutions.get(this);
             return previousSubstitution.unify(argument, substitutions);
         }
 
