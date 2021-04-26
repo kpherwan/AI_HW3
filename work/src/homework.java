@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class homework {
-    // minimim one second
+    // minimum one second
     private static final double TOTAL_TIME_FOR_QUERY = 1000;
     private static final double TOTAL_ATTEMPTS = 150;
     private static final String NOT_INFERRED = "FALSE";
