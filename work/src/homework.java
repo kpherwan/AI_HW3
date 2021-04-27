@@ -63,18 +63,19 @@ public class homework {
         PredicateInfo predicateInfo = predicateMap.get(predicate);
         Clause queryClause = new Clause(negatedQueryLiteral);
         addClauseToMap(queryClause, predicateMap);
-        Queue<Clause> queue = new LinkedList<>();
+        //Queue<Clause> queue = new LinkedList<>();
+        Stack<Clause> stack = new Stack<>();
         Clause newClause = queryClause;
 
         if (predicateInfo != null) {
-            //newClause.printClause();
-             queue.addAll(resolve(queryClause, predicateMap));
+            newClause.printClause();
+            stack.addAll(resolve(queryClause, predicateMap));
             do {
-                if(queue == null || queue.isEmpty()/* || !newClause.isValid()*/) {
+                if(stack == null || stack.isEmpty()/* || !newClause.isValid()*/) {
                     return false;
                 }
 
-                newClause = queue.poll();
+                newClause = stack.pop();
 
                 if (newClause.isEmpty()) {
                     return true;
@@ -89,8 +90,8 @@ public class homework {
                 }
                 int exitCode = addClauseToMap(newClause, predicateMap);
                 if (exitCode == 0) {
-                    //newClause.printClause();
-                    queue.addAll(resolve(newClause, predicateMap));
+                    newClause.printClause();
+                    stack.addAll(resolve(newClause, predicateMap));
                 }
 
             }while (true);
